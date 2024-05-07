@@ -3,7 +3,7 @@ using UnityEngine.Events;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _prefab;
+    [SerializeField] private CubeClickInvoker _prefab;
     [SerializeField] private int _numberOfCubes;
     [SerializeField] private float _startRadius;
     [SerializeField] private float _explosionForce;
@@ -15,27 +15,12 @@ public class Spawner : MonoBehaviour
     private int _minNumberOfScaledCubes = 2;
     private int _maxNumberOfScaledCubes = 6;
 
-    private event UnityAction<GameObject> SpawnNewCubes;
+    private event UnityAction<CubeClickInvoker> CubeClicked;
 
     private void Start()
     {
-        SpawnNewCubes = SpawnScaledCubes;
+        CubeClicked = DestroyCube;
         AddStartCubes();
-    }
-
-    private void Subscribe(GameObject cube)
-    {
-        cube.GetComponent<CubeController>().Clicked += SpawnNewCubes;
-    }
-
-    private void SetThreshold(GameObject cube, float threshold)
-    {
-        cube.GetComponent<CubeController>().SetThreshhold(threshold);
-    }
-
-    private float GetNewThreshold(GameObject cube)
-    {
-        return cube.GetComponent<CubeController>().SpawnThreshold / _spawnThresholdDivider;
     }
 
     private Quaternion GetRandomRotation()
@@ -49,37 +34,33 @@ public class Spawner : MonoBehaviour
         return new Vector3(randomPositionXZ.x, transform.position.y, randomPositionXZ.z);
     }
 
-    private void Explode(GameObject cube, Vector3 position)
+    private void Explode(CubeClickInvoker cube, Vector3 position)
     {
         Rigidbody cubeRigidbody = cube.GetComponent<Rigidbody>();
         cubeRigidbody.AddExplosionForce(_explosionForce, position, _explosionRadius);
     }
 
-    private void SpawnScaledCubes(GameObject clickedCube)
+    private void DestroyCube(CubeClickInvoker clickedCube)
     {
-        var cubeController = clickedCube.GetComponent<CubeController>();
-
-        if (Random.Range(0f, _startThreshold) <= cubeController.SpawnThreshold)
+        if (Random.Range(0f, _startThreshold) <= clickedCube.SpawnThreshold)
             AddScaledCubes(clickedCube);
 
-        Destroy(clickedCube);
+        Destroy(clickedCube.gameObject);
     }
 
-    private void AddScaledCubes(GameObject clickedCube)
+    private void AddScaledCubes(CubeClickInvoker clickedCube)
     {
         int numberOfScaledCubes = Random.Range(_minNumberOfScaledCubes, _maxNumberOfScaledCubes);
-        float newThreshold = GetNewThreshold(clickedCube);
+        float newThreshold = clickedCube.SpawnThreshold / _spawnThresholdDivider;
 
         for (int i = 0; i < numberOfScaledCubes; i++)
         {
-            GameObject newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
+            CubeClickInvoker newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
             newCube.transform.localScale = clickedCube.transform.localScale * _scaleMultiplier;
 
-            newCube.AddComponent<CubeController>();
-
             Explode(newCube, clickedCube.transform.position);
-            SetThreshold(newCube, newThreshold);
-            Subscribe(newCube);
+            newCube.SetThreshhold(newThreshold);
+            newCube.Clicked += CubeClicked;
         }
     }
 
@@ -87,10 +68,10 @@ public class Spawner : MonoBehaviour
     {
         for (int i = 0; i < _numberOfCubes; i++)
         {
-            GameObject cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
+            CubeClickInvoker cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
 
-            SetThreshold(cube, _startThreshold);
-            Subscribe(cube);
+            cube.SetThreshhold(_startThreshold);
+            cube.Clicked += CubeClicked;
         }
     }
 }
