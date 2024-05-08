@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private CubeClickInvoker _prefab;
+    [SerializeField] private ClickHandler _prefab;
     [SerializeField] private int _numberOfCubes;
     [SerializeField] private float _startRadius;
     [SerializeField] private float _explosionForce;
@@ -30,13 +30,13 @@ public class Spawner : MonoBehaviour
         return new Vector3(randomPositionXZ.x, transform.position.y, randomPositionXZ.z);
     }
 
-    private void Explode(CubeClickInvoker cube, Vector3 position)
+    private void Explode(ClickHandler cube, Vector3 position)
     {
         Rigidbody cubeRigidbody = cube.GetComponent<Rigidbody>();
         cubeRigidbody.AddExplosionForce(_explosionForce, position, _explosionRadius);
     }
 
-    private void DestroyCube(CubeClickInvoker clickedCube)
+    private void DestroyCube(ClickHandler clickedCube)
     {
         if (Random.Range(0f, _startThreshold) <= clickedCube.SpawnThreshold)
             AddScaledCubes(clickedCube);
@@ -44,14 +44,14 @@ public class Spawner : MonoBehaviour
         Destroy(clickedCube.gameObject);
     }
 
-    private void AddScaledCubes(CubeClickInvoker clickedCube)
+    private void AddScaledCubes(ClickHandler clickedCube)
     {
         int numberOfScaledCubes = Random.Range(_minNumberOfScaledCubes, _maxNumberOfScaledCubes);
         float newThreshold = clickedCube.SpawnThreshold / _spawnThresholdDivider;
 
         for (int i = 0; i < numberOfScaledCubes; i++)
         {
-            CubeClickInvoker newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
+            ClickHandler newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
             newCube.transform.localScale = clickedCube.transform.localScale * _scaleMultiplier;
 
             Explode(newCube, clickedCube.transform.position);
@@ -64,7 +64,7 @@ public class Spawner : MonoBehaviour
     {
         for (int i = 0; i < _numberOfCubes; i++)
         {
-            CubeClickInvoker cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
+            ClickHandler cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
 
             cube.SetThreshhold(_startThreshold);
             cube.Clicked += DestroyCube;

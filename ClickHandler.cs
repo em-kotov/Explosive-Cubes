@@ -4,11 +4,11 @@ using UnityEngine.Events;
 [RequireComponent(typeof(Renderer))]
 [RequireComponent(typeof(Rigidbody))]
 
-public class CubeClickInvoker : MonoBehaviour
+public class ClickHandler : MonoBehaviour
 {
     private float _spawnThreshold;
 
-    public event UnityAction<CubeClickInvoker> Clicked;
+    public event UnityAction<ClickHandler> Clicked;
 
     public float SpawnThreshold => _spawnThreshold;
 
