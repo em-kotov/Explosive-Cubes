@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Events;
 
 public class Spawner : MonoBehaviour
 {
@@ -15,11 +14,8 @@ public class Spawner : MonoBehaviour
     private int _minNumberOfScaledCubes = 2;
     private int _maxNumberOfScaledCubes = 6;
 
-    private event UnityAction<CubeClickInvoker> CubeClicked;
-
     private void Start()
     {
-        CubeClicked = DestroyCube;
         AddStartCubes();
     }
 
@@ -60,7 +56,7 @@ public class Spawner : MonoBehaviour
 
             Explode(newCube, clickedCube.transform.position);
             newCube.SetThreshhold(newThreshold);
-            newCube.Clicked += CubeClicked;
+            newCube.Clicked += DestroyCube;
         }
     }
 
@@ -71,7 +67,7 @@ public class Spawner : MonoBehaviour
             CubeClickInvoker cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
 
             cube.SetThreshhold(_startThreshold);
-            cube.Clicked += CubeClicked;
+            cube.Clicked += DestroyCube;
         }
     }
 }
