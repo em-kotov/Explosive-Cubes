@@ -11,7 +11,7 @@ public class ClickHandler : MonoBehaviour
     public event UnityAction<ClickHandler> Clicked;
 
     public float SpawnThreshold => _spawnThreshold;
-
+    
     private void Start()
     {
         GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 0.5f, 0.5f, 0.85f, 0.85f);
@@ -24,7 +24,9 @@ public class ClickHandler : MonoBehaviour
 
     public void SetThreshhold(float threshold)
     {
-        if (threshold <= 100f && threshold > 0f)
+        float max = 100f;
+
+        if (threshold <= max && threshold > 0)
             _spawnThreshold = threshold;
     }
 }

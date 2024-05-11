@@ -1,12 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
     [SerializeField] private ClickHandler _prefab;
+    [SerializeField] private ParticleSystem _effect;
     [SerializeField] private int _numberOfCubes;
     [SerializeField] private float _startRadius;
     [SerializeField] private float _explosionForce;
     [SerializeField] private float _explosionRadius;
+    [SerializeField] private float _newCubesExplosionForce;
+    [SerializeField] private float _newCubesExplosionRadius;
 
     private float _scaleMultiplier = 0.5f;
     private float _startThreshold = 100f;
@@ -30,18 +34,46 @@ public class Spawner : MonoBehaviour
         return new Vector3(randomPositionXZ.x, transform.position.y, randomPositionXZ.z);
     }
 
-    private void Explode(ClickHandler cube, Vector3 position)
+    private List<Rigidbody> GetExplodableObjects(ClickHandler cube)
+    {
+        Collider[] hits = Physics.OverlapSphere(cube.transform.position, _explosionRadius);
+
+        List<Rigidbody> cubes = new();
+
+        foreach (Collider hit in hits)
+            if (hit.attachedRigidbody != null)
+                cubes.Add(hit.attachedRigidbody);
+
+        return cubes;
+    }
+
+    private void AddForce(ClickHandler cube, Vector3 position)
     {
         Rigidbody cubeRigidbody = cube.GetComponent<Rigidbody>();
-        cubeRigidbody.AddExplosionForce(_explosionForce, position, _explosionRadius);
+        cubeRigidbody.AddExplosionForce(_newCubesExplosionForce, position, _newCubesExplosionRadius);
     }
 
     private void DestroyCube(ClickHandler clickedCube)
     {
         if (Random.Range(0f, _startThreshold) <= clickedCube.SpawnThreshold)
             AddScaledCubes(clickedCube);
+        else
+            Explode(clickedCube);
 
         Destroy(clickedCube.gameObject);
+    }
+
+    private void Explode(ClickHandler cube)
+    {
+        float multiplier = 5f;
+        float divider = cube.SpawnThreshold * 0.1f;
+        float currentForce = _explosionForce * multiplier / divider;
+        float currentRadius = _explosionRadius * multiplier / divider;
+
+        Instantiate(_effect, cube.transform.position, Quaternion.identity);
+
+        foreach (Rigidbody explodableObject in GetExplodableObjects(cube))
+            explodableObject.AddExplosionForce(currentForce, cube.transform.position, currentRadius);
     }
 
     private void AddScaledCubes(ClickHandler clickedCube)
@@ -54,7 +86,7 @@ public class Spawner : MonoBehaviour
             ClickHandler newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
             newCube.transform.localScale = clickedCube.transform.localScale * _scaleMultiplier;
 
-            Explode(newCube, clickedCube.transform.position);
+            AddForce(newCube, clickedCube.transform.position);
             newCube.SetThreshhold(newThreshold);
             newCube.Clicked += DestroyCube;
         }
