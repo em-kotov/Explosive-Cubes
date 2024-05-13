@@ -14,18 +14,13 @@ public class Spawner : MonoBehaviour
 
     private float _scaleMultiplier = 0.5f;
     private float _startThreshold = 100f;
-    private float _spawnThresholdDivider = 2f;
+    private float _spawnThresholdDivider = 0.5f;
     private int _minNumberOfScaledCubes = 2;
     private int _maxNumberOfScaledCubes = 6;
 
     private void Start()
     {
         AddStartCubes();
-    }
-
-    private Quaternion GetRandomRotation()
-    {
-        return Quaternion.Euler(Random.Range(0f, 360f), Random.Range(0f, 360f), Random.Range(0f, 360f));
     }
 
     private Vector3 GetRandomPositionXZ()
@@ -60,15 +55,15 @@ public class Spawner : MonoBehaviour
         else
             Explode(clickedCube);
 
+        clickedCube.Clicked -= DestroyCube;
         Destroy(clickedCube.gameObject);
     }
 
     private void Explode(ClickHandler cube)
     {
-        float multiplier = 5f;
-        float divider = cube.SpawnThreshold * 0.1f;
-        float currentForce = _explosionForce * multiplier / divider;
-        float currentRadius = _explosionRadius * multiplier / divider;
+        float multiplier = 50f;
+        float currentForce = _explosionForce * multiplier / cube.SpawnThreshold;
+        float currentRadius = _explosionRadius * multiplier / cube.SpawnThreshold;
 
         Instantiate(_effect, cube.transform.position, Quaternion.identity);
 
@@ -79,11 +74,11 @@ public class Spawner : MonoBehaviour
     private void AddScaledCubes(ClickHandler clickedCube)
     {
         int numberOfScaledCubes = Random.Range(_minNumberOfScaledCubes, _maxNumberOfScaledCubes);
-        float newThreshold = clickedCube.SpawnThreshold / _spawnThresholdDivider;
+        float newThreshold = clickedCube.SpawnThreshold * _spawnThresholdDivider;
 
         for (int i = 0; i < numberOfScaledCubes; i++)
         {
-            ClickHandler newCube = Instantiate(_prefab, clickedCube.transform.position, GetRandomRotation());
+            ClickHandler newCube = Instantiate(_prefab, clickedCube.transform.position, Random.rotation);
             newCube.transform.localScale = clickedCube.transform.localScale * _scaleMultiplier;
 
             AddForce(newCube, clickedCube.transform.position);
@@ -96,7 +91,7 @@ public class Spawner : MonoBehaviour
     {
         for (int i = 0; i < _numberOfCubes; i++)
         {
-            ClickHandler cube = Instantiate(_prefab, GetRandomPositionXZ(), GetRandomRotation());
+            ClickHandler cube = Instantiate(_prefab, GetRandomPositionXZ(), Random.rotation);
 
             cube.SetThreshhold(_startThreshold);
             cube.Clicked += DestroyCube;
